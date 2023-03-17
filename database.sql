@@ -1,6 +1,6 @@
 CREATE TABLE genre (
     id          INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    name        VARCHAR(255)
+    name        VARCHAR(255) UNIQUE
 );
 
 CREATE TABLE film (
