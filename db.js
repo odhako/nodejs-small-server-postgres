@@ -17,4 +17,12 @@ const pool = new Pool({
 
 });
 
-module.exports = pool;
+const callback = (serverResponse) => (error, dbResponse) => {
+  if (error) {
+    serverResponse.send(error);
+    throw error;
+  }
+  return serverResponse.send(dbResponse.rows);
+};
+
+module.exports = {pool, callback};
