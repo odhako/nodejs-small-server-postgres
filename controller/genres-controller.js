@@ -1,38 +1,35 @@
-const {pool: db, callback} = require('../db.js');
+const db = require('../db.js');
 
 class GenresController {
 
-  createGenre(request, response) {
+  async createGenre(request, response) {
     const name = request.body.name;
-    db.query(
-      'INSERT INTO genre (name) VALUES ($1) RETURNING *',
-      [name],
-      callback(response)
-    );
+    const result = await db.query('INSERT INTO genre (name) VALUES ($1) RETURNING *', [name]);
+    response.send(result.rows);
   }
 
-  getGenre(request, response) {
+  async getGenre(request, response) {
     const id = request.params.id;
-    db.query('SELECT * FROM genre WHERE id = $1', [id], callback(response));
+    const result = await db.query('SELECT * FROM genre WHERE id = $1', [id]);
+    response.send(result.rows);
   }
 
-  getAllGenres(request, response) {
-    db.query('SELECT * FROM genre', callback(response));
+  async getAllGenres(request, response) {
+    const result = await db.query('SELECT * FROM genre');
+    response.send(result.rows);
   }
 
-  updateGenre(request, response) {
+  async updateGenre(request, response) {
     const id = request.params.id;
     const name = request.body.name;
-    db.query(
-      'UPDATE genre SET name = $1 WHERE id = $2 RETURNING *',
-      [name, id],
-      callback(response)
-    );
+    const result = await db.query('UPDATE genre SET name = $1 WHERE id = $2 RETURNING *', [name, id]);
+    response.send(result.rows);
   }
 
-  deleteGenre(request, response) {
+  async deleteGenre(request, response) {
     const id = request.params.id;
-    db.query('DELETE FROM genre WHERE id = $1', [id], callback(response));
+    const result = await db.query('DELETE FROM genre WHERE id = $1', [id]);
+    response.send(result.rows);
   }
 
 }
