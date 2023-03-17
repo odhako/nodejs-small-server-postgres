@@ -1,38 +1,98 @@
-const {pool: db, callback} = require('../db.js');
+const db = require('../db.js');
 
 class FilmsController {
 
-  createFilm(request, response) {
+  async createFilm(request, response) {
     const {title, year} = request.body;
-    const newFilm = db.query(
-      'INSERT INTO film (title, year) VALUES ($1, $2) RETURNING *',
-      [title, year],
-      callback(response)
+    const filmGenres = request.body['genres'];
+    const dbGenres = await db.query('SELECT * FROM genre');
+    const genreIds = [];
+
+    for (const genre of filmGenres) {
+      if (dbGenres.rows.find(obj => obj.name === genre)) {
+        genreIds.push(dbGenres.rows.find(obj => obj.name === genre).id)
+      } else {
+        const newGenre = await db.query('INSERT INTO genre (name) VALUES ($1) RETURNING id', [genre])
+        genreIds.push(newGenre.rows[0].id);
+      }
+    }
+
+    const newFilm = await db.query('INSERT INTO film (title, year) VALUES ($1, $2) RETURNING (id)', [title, year]);
+    const filmId = newFilm.rows[0].id;
+    for (const genreId of genreIds) {
+      await db.query('INSERT INTO film_genre (film_id, genre_id) VALUES ($1, $2)', [filmId, genreId])
+    }
+    const result = await db.query(
+      "SELECT film.id, film.title, film.year, array_agg(genre.name) AS genres " +
+      "FROM film " +
+      "JOIN film_genre ON film.id = film_id " +
+      "JOIN genre ON genre.id = genre_id " +
+      "WHERE film.id = $1 " +
+      "GROUP BY film.id, film.title, film.year", [filmId]
     );
+    response.send(result.rows[0]);
   }
 
-  getFilm(request, response) {
-    const id = request.params.id;
-    const film = db.query('SELECT * FROM film WHERE id = $1', [id], callback(response));
+  async getFilm(request, response) {
+    const filmId = request.params.id;
+    const film = await db.query(
+      "SELECT film.id, film.title, film.year, array_agg(genre.name) AS genres " +
+      "FROM film " +
+      "JOIN film_genre ON film.id = film_id " +
+      "JOIN genre ON genre.id = genre_id " +
+      "WHERE film.id = $1 " +
+      "GROUP BY film.id, film.title, film.year", [filmId]
+    );
+    response.send(film.rows[0]);
   }
 
-  getAllFilms(request, response) {
-    const films = db.query('SELECT * FROM film', callback(response));
+  async getAllFilms(request, response) {
+    const allFilms = await db.query(
+      "SELECT film.id, film.title, film.year, array_agg(genre.name) AS genres " +
+      "FROM film " +
+      "JOIN film_genre ON film.id = film_id " +
+      "JOIN genre ON genre.id = genre_id " +
+      "GROUP BY film.id, film.title, film.year"
+    );
+    response.send(allFilms.rows);
   }
 
-  updateFilm(request, response) {
-    const id = request.params.id;
+  async updateFilm(request, response) {
+    const filmId = request.params.id;
     const {title, year} = request.body;
-    const updatedFilm = db.query(
-      'UPDATE film SET title = $1, year = $2 WHERE id = $3 RETURNING *',
-      [title, year, id],
-      callback(response)
+    const filmGenres = request.body['genres'];
+    const dbGenres = await db.query('SELECT * FROM genre');
+    const genreIds = [];
+
+    for (const genre of filmGenres) {
+      if (dbGenres.rows.find(obj => obj.name === genre)) {
+        genreIds.push(dbGenres.rows.find(obj => obj.name === genre).id)
+      } else {
+        const newGenre = await db.query('INSERT INTO genre (name) VALUES ($1) RETURNING id', [genre])
+        genreIds.push(newGenre.rows[0].id);
+      }
+    }
+
+    await db.query('UPDATE film SET title = $1, year = $2 WHERE id = $3', [title, year, filmId]);
+    await db.query('DELETE FROM film_genre WHERE film_id = $1', [filmId]);
+    for (const genreId of genreIds) {
+      await db.query('INSERT INTO film_genre (film_id, genre_id) VALUES ($1, $2)', [filmId, genreId])
+    }
+    const result = await db.query(
+      "SELECT film.id, film.title, film.year, array_agg(genre.name) AS genres " +
+      "FROM film " +
+      "JOIN film_genre ON film.id = film_id " +
+      "JOIN genre ON genre.id = genre_id " +
+      "WHERE film.id = $1 " +
+      "GROUP BY film.id, film.title, film.year", [filmId]
     );
+    response.send(result.rows[0]);
   }
 
-  deleteFilm(request, response) {
+  async deleteFilm(request, response) {
     const id = request.params.id;
-    const deletedFilm = db.query(`DELETE FROM film WHERE id = $1`, [id], callback(response));
+    const result = await db.query(`DELETE FROM film WHERE id = $1`, [id]);
+    response.send(result.rows[0]);
   }
 }
 
