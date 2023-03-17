@@ -11,6 +11,6 @@ CREATE TABLE film (
 
 CREATE TABLE film_genre (
     id          INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    film_id     INTEGER REFERENCES film (id),
-    genre_id    INTEGER REFERENCES genre (id)
+    film_id     INTEGER REFERENCES film (id) ON DELETE CASCADE,
+    genre_id    INTEGER REFERENCES genre (id) ON DELETE CASCADE
 );
