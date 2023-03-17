@@ -3,7 +3,6 @@ const filmsController = require('../controller/films-controller.js');
 
 const router = new Router();
 
-// router.get('/film', filmsController.getAllFilms);
 router.post('/film', filmsController.createFilm);
 router.get('/film', filmsController.getFilm);
 router.get('/films', filmsController.getAllFilms);
