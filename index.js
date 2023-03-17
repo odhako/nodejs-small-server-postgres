@@ -2,6 +2,7 @@ const Application = require('./framework/Application.js');
 const parseJson = require('./framework/parseJson.js');
 const parseUrl = require('./framework/parseUrl.js');
 const filmsRoutes = require('./routes/films-routes.js');
+const genresRoutes = require('./routes/genres-routes.js');
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -10,6 +11,7 @@ const PORT = process.env.PORT;
 
 const app = new Application();
 app.addRouter(filmsRoutes);
+app.addRouter(genresRoutes);
 app.use(parseJson);
 app.use(parseUrl(`${HOST}:${PORT}`));
 
